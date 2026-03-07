@@ -5,7 +5,7 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require "nowpayments/version"
 
 Gem::Specification.new do |spec|
-  spec.name          = "nowpayments"
+  spec.name          = "nowpayments-ruby"
   spec.version       = NowPayments::VERSION
   spec.authors       = ["Foisalislambd"]
   spec.email         = [""]

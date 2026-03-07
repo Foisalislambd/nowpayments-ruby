@@ -41,13 +41,13 @@
 ## 🚀 Quick Start
 
 ```bash
-gem install nowpayments
+gem install nowpayments-ruby
 ```
 
 Or add to your Gemfile:
 
 ```ruby
-gem "nowpayments"
+gem "nowpayments-ruby"
 ```
 
 ```ruby
