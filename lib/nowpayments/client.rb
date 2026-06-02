@@ -93,8 +93,8 @@ module NowPayments
       @http.get("/v1/payment/#{payment_id}")
     end
 
-    def get_payments(params = {})
-      @http.get('/v1/payment/', params)
+    def get_payments(params = {}, jwt_token = nil)
+      @http.get('/v1/payment/', params, jwt_token)
     end
 
     def update_payment_estimate(payment_id)
@@ -132,7 +132,14 @@ module NowPayments
     def cancel_payout(payout_id, jwt_token)
       raise ArgumentError, 'JWT token is required for cancel_payout. Call get_auth_token first.' if jwt_token.to_s.strip.empty?
 
-      @http.post("/v1/payout/#{payout_id}/cancel", { payout_id: payout_id }, jwt_token)
+      @http.post('/v1/payout/w_id/cancel', { payout_id: payout_id }, jwt_token)
+    end
+
+    def get_payout_fee(currency, amount)
+      raise ArgumentError, 'Currency is required (e.g. "btc", "eth")' if currency.to_s.strip.empty?
+      raise ArgumentError, 'Amount is required' if amount.nil?
+
+      @http.get('/v1/payout/fee', { currency: currency, amount: amount })
     end
 
     def get_payout_status(payout_id, jwt_token = nil)
@@ -237,7 +244,9 @@ module NowPayments
       @http.post('/v1/sub-partner/deposit', params, jwt_token)
     end
 
-    def write_off(params, jwt_token = nil)
+    def write_off(params, jwt_token)
+      raise ArgumentError, 'JWT token is required for write_off. Call get_auth_token first.' if jwt_token.to_s.strip.empty?
+
       @http.post('/v1/sub-partner/write-off', params, jwt_token)
     end
 

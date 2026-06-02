@@ -41,8 +41,9 @@ module NowPayments
       json_string = JSON.generate(sort_object(obj))
       computed_sig = OpenSSL::HMAC.hexdigest('SHA512', ipn_secret.strip, json_string)
 
-      sig_bytes = [signature].pack('H*')
-      computed_bytes = [computed_sig].pack('H*')
+      sig_hex = signature.to_s.gsub(/[^a-fA-F0-9]/, '').downcase
+      sig_bytes = [sig_hex].pack('H*')
+      computed_bytes = [computed_sig.downcase].pack('H*')
       return false if sig_bytes.bytesize != computed_bytes.bytesize
 
       OpenSSL::fixed_length_secure_compare(sig_bytes, computed_bytes)
