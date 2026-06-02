@@ -51,7 +51,8 @@ module NowPayments
       code = currency.to_s.strip
       raise ArgumentError, 'Currency code is required (e.g. "btc", "eth")' if code.empty?
 
-      @http.get("/v1/currencies/#{code}")
+      require 'uri'
+      @http.get("/v1/currencies/#{URI.encode_www_form_component(code.to_s)}")
     end
 
     # --- Estimate & Min Amount ---
@@ -213,7 +214,15 @@ module NowPayments
     def create_sub_partner_payment(params, jwt_token)
       raise ArgumentError, 'JWT token is required for create_sub_partner_payment. Call get_auth_token first.' if jwt_token.to_s.strip.empty?
 
-      @http.post('/v1/sub-partner/payment', params, jwt_token)
+      body = params.dup
+      is_fixed_val = body[:is_fixed_rate] || body['is_fixed_rate']
+      has_fixed = body.key?(:fixed_rate) || body.key?('fixed_rate')
+      if !is_fixed_val.nil? && !has_fixed
+        body[:fixed_rate] = is_fixed_val
+        body.delete(:is_fixed_rate)
+        body.delete('is_fixed_rate')
+      end
+      @http.post('/v1/sub-partner/payment', body, jwt_token)
     end
 
     def get_sub_partners(params = {}, jwt_token = nil)
