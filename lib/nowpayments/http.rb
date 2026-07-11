@@ -25,7 +25,7 @@ module NowPayments
 
     def post(path, body = nil, jwt_token = nil)
       response = @conn.post(path) do |req|
-        req.body = body.nil? ? {} : body
+        req.body = body unless body.nil?
         req.headers["Authorization"] = "Bearer #{jwt_token}" if jwt_token.to_s.strip != ""
       end
       handle_response(response)

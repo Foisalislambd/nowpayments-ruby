@@ -11,11 +11,15 @@ module NowPayments
     def initialize(api_key:, sandbox: false, base_url: nil, timeout: 30_000, ipn_secret: nil)
       raise ArgumentError, 'NOWPayments API key is required. Get yours at https://account.nowpayments.io' if api_key.to_s.strip.empty?
 
+      # Accept seconds (<=100) or milliseconds (>100)
+      t = timeout || 30_000
+      timeout_sec = t.to_f > 100 ? t.to_f / 1000.0 : t.to_f
+
       @config = {
         api_key: api_key.to_s.strip,
         sandbox: sandbox,
         base_url: base_url,
-        timeout: (timeout || 30_000) / 1000.0, # Faraday uses seconds
+        timeout: timeout_sec,
         ipn_secret: ipn_secret
       }
       @http = Http.new(@config)
@@ -99,7 +103,9 @@ module NowPayments
     end
 
     def update_payment_estimate(payment_id)
-      @http.post("/v1/payment/#{payment_id}/update-merchant-estimate", {})
+      raise ArgumentError, 'Payment ID is required' if payment_id.to_s.strip.empty?
+
+      @http.post("/v1/payment/#{payment_id}/update-merchant-estimate", nil)
     end
 
     # --- Invoices ---

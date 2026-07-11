@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+require "json"
+require "openssl"
+
 module NowPayments
   # IPN (Instant Payment Notification) verification utilities
   # Matches official docs: sort keys recursively, then HMAC-SHA512
@@ -13,7 +16,7 @@ module NowPayments
       normalized = obj.transform_keys(&:to_s)
       normalized.keys.sort.each_with_object({}) do |key, result|
         val = normalized[key]
-        result[key] = val.is_a?(Hash) && !val.is_a?(Array) ? sort_object(val) : val
+        result[key] = val.is_a?(Hash) ? sort_object(val) : val
         result
       end
     end
@@ -21,7 +24,10 @@ module NowPayments
     # Verify IPN callback signature from NOWPayments.
     # Safe to call – handles invalid input gracefully.
     #
-    # @param payload [String, Hash] Raw request body (string or parsed object)
+    # Prefer the raw HTTP body string when possible. Framework-parsed hashes can
+    # coerce number/string types and break verification.
+    #
+    # @param payload [String, Hash] Raw request body (string recommended) or parsed object
     # @param signature [String] Value from x-nowpayments-sig header
     # @param ipn_secret [String] Your IPN Secret from Dashboard → Store Settings
     # @return [Boolean] true if signature is valid, false otherwise
@@ -41,10 +47,12 @@ module NowPayments
       json_string = JSON.generate(sort_object(obj))
       computed_sig = OpenSSL::HMAC.hexdigest('SHA512', ipn_secret.strip, json_string)
 
-      sig_hex = signature.to_s.gsub(/[^a-fA-F0-9]/, '').downcase
+      sig_hex = signature.to_s.strip.downcase
+      sig_hex = sig_hex.split("=", 2).last if sig_hex.include?("=")
+      sig_hex = sig_hex.gsub(/[^a-f0-9]/, "")
       sig_bytes = [sig_hex].pack('H*')
       computed_bytes = [computed_sig.downcase].pack('H*')
-      return false if sig_bytes.bytesize != computed_bytes.bytesize
+      return false if sig_bytes.bytesize != computed_bytes.bytesize || sig_bytes.empty?
 
       OpenSSL::fixed_length_secure_compare(sig_bytes, computed_bytes)
     rescue JSON::ParserError, ArgumentError

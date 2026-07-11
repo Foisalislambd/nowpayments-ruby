@@ -9,8 +9,6 @@ require "nowpayments/helpers"
 require "nowpayments/client"
 
 module NowPayments
-  class Error < StandardError; end
-
   # Convenience aliases (Node.js style)
   def self.verify_ipn_signature(payload, signature, ipn_secret)
     IPN.verify_signature(payload, signature, ipn_secret)
